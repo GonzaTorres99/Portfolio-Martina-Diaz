@@ -1,32 +1,32 @@
-// Hero.tsx
+// src/components/Hero.tsx
+import React from "react";
 import foto from '../assets/images/MartinaDiazPH-15.jpg';
 import cv from '../assets/cv/CV Martina Díaz.pdf';
+import logo from "../assets/images/MD.png";
 
 const Hero: React.FC = () => {
   return (
     <section className="relative h-[90vh] bg-gray-900">
-      {/* Fondo degradado + SVG decorativo */}
+      {/* Fondo degradado + logo decorativo (ahora el logo ocupa el lugar del círculo) */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* degradado general */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-gray-900 to-black opacity-85" />
-        <svg
-          className="absolute -right-28 top-10 hidden lg:block opacity-20"
-          width="560"
-          height="560"
-          viewBox="0 0 560 560"
-          fill="none"
+
+        {/* Logo grande como elemento de fondo (ocupa la misma zona que el círculo) */}
+        <img
+          src={logo}
+          alt=""
           aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1">
-              <stop offset="0" stopColor="#06b6d4" stopOpacity="0.18" />
-              <stop offset="1" stopColor="#7c3aed" stopOpacity="0.06" />
-            </linearGradient>
-          </defs>
-          <circle cx="280" cy="280" r="280" fill="url(#g1)" />
-        </svg>
+          loading="lazy"
+          className="absolute -right-28 top-10 hidden lg:block opacity-20 w-[560px] h-[560px] object-contain pointer-events-none select-none"
+        />
+
+        {/* Si querés mantener el círculo + logo (superponer), podés descomentar esto en vez de la línea anterior:
+            <svg ...> ... </svg>
+            o combinar ambos. */}
       </div>
 
-      {/* Contenido */}
+      {/* Contenido (sobre la capa de fondo) */}
       <div className="relative z-10 mx-auto max-w-7xl px-6 py-12 h-full flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full h-full">
           {/* Left content */}
@@ -34,7 +34,7 @@ const Hero: React.FC = () => {
             <h1 className="text-white font-extrabold leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem]">
               Martina Díaz
             </h1>
-             <h1 className="text-white font-extrabold leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+            <h1 className="text-white font-extrabold leading-tight text-3xl sm:text-4xl md:text-5xl lg:text-[3rem] mt-2">
               Fotógrafa
             </h1>
 
@@ -77,7 +77,7 @@ const Hero: React.FC = () => {
               {/* Descargar CV */}
               <a
                 href={cv}
-                download="CV-Martina-Diaz.pdf" // 👉 el nombre con el que se descarga
+                download="CV-Martina-Diaz.pdf"
                 className="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-md focus:outline-none focus:ring-4 focus:ring-teal-300"
               >
                 Descargar CV
