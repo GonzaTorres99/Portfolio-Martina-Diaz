@@ -174,7 +174,7 @@ const Album: React.FC = () => {
                                             alt={images[openIndex].name}
                                             className="max-h-[70vh] w-auto object-contain"
                                         />
-                                        <div className="mt-3 text-center text-sm text-gray-300">{images[openIndex].name}</div>
+                                        
                                     </div>
 
                                     {/* Next */}
