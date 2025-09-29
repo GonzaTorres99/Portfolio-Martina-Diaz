@@ -1,44 +1,64 @@
 // src/components/Hero.tsx
 import React from "react";
-import foto from '../assets/images/MartinaDiazPH-15.jpg';
+import foto from '../assets/images/marti1.png';
 import cv from '../assets/cv/CV Martina Díaz.pdf';
 import logo from "../assets/images/MD.png";
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative h-[90vh] bg-gray-900">
-      {/* Fondo degradado + logo decorativo (ahora el logo ocupa el lugar del círculo) */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section className="relative bg-gray-900">
+      {/* Fondo degradado + logo decorativo (ahora visible en todos los tamaños) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
         {/* degradado general */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-gray-900 to-black opacity-85" />
 
-        {/* Logo grande como elemento de fondo (ocupa la misma zona que el círculo) */}
+        {/* Logo grande como elemento de fondo - visible en todos los tamaños.
+            En pantallas grandes lo desplazamos ligeramente hacia el centro (right-1/4).
+            Ajustamos tamaños según breakpoint para mantener buena composición. */}
         <img
           src={logo}
           alt=""
           aria-hidden="true"
           loading="lazy"
-          className="absolute -right-28 top-10 hidden lg:block opacity-20 w-[560px] h-[560px] object-contain pointer-events-none select-none"
+          className="
+            absolute
+            top-8
+            right-4
+            opacity-20
+            w-[220px] sm:w-[320px] md:w-[420px] lg:w-[560px]
+            h-auto
+            lg:right-1/4 lg:top-12
+          "
         />
-
-        {/* Si querés mantener el círculo + logo (superponer), podés descomentar esto en vez de la línea anterior:
-            <svg ...> ... </svg>
-            o combinar ambos. */}
       </div>
 
       {/* Contenido (sobre la capa de fondo) */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-12 h-full flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full h-full">
+      {/* Usamos flex-col en móvil (imagen arriba), y grid en lg para layout horizontal */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-12">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 lg:items-center gap-8 w-full">
+          {/* Right image (on mobile shows first because of flex-col-reverse) */}
+          <div className="lg:col-span-5 flex items-center justify-center order-first lg:order-last">
+            {/* Contenedor visual 'invisible' — sin sombra ni efecto hover */}
+            <div className="relative rounded-xl overflow-hidden bg-transparent">
+              <img
+                src={foto}
+                alt="Martina Díaz"
+                className="object-contain max-h-[60vh] md:max-h-[72vh] lg:max-h-[80vh] w-auto"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
           {/* Left content */}
-          <div className="lg:col-span-7 flex flex-col justify-center h-full">
+          <div className="lg:col-span-7 flex flex-col justify-center">
             <h1 className="text-white font-extrabold leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem]">
               Martina Díaz
             </h1>
-            <h1 className="text-white font-extrabold leading-tight text-3xl sm:text-4xl md:text-5xl lg:text-[3rem] mt-2">
+            <h2 className="text-white font-extrabold leading-tight text-2xl sm:text-3xl md:text-4xl lg:text-[3rem] mt-2">
               Fotógrafa
-            </h1>
+            </h2>
 
-            <p className="mt-6 text-gray-200 max-w-3xl text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed">
+            <p className="mt-6 text-gray-200 max-w-3xl text-base sm:text-lg md:text-xl leading-relaxed">
               Periodista y fotógrafa profesional especializada en eventos deportivos. Capturo la intensidad
               del juego, la emoción de las gradas y los momentos que cuentan historias. Trabajo con edición profesional y entrega optimizada para web
               y prensa.
@@ -101,18 +121,6 @@ const Hero: React.FC = () => {
               <span className="text-sm">📸 Cobertura en vivo</span>
               <span className="text-sm">🕒 Entrega rápida</span>
               <span className="text-sm">📰 Formatos para prensa</span>
-            </div>
-          </div>
-
-          {/* Right image */}
-          <div className="lg:col-span-5 flex items-center justify-center h-4/5">
-            <div className="w-full h-full max-h-[80vh] lg:max-h-[85vh] rounded-xl overflow-hidden shadow-2xl transform transition-transform duration-500 hover:scale-105">
-              <img
-                src={foto}
-                alt="Martina Díaz, fotógrafa deportiva - ejemplo de retrato editorial"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
             </div>
           </div>
         </div>

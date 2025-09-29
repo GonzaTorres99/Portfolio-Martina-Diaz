@@ -1,60 +1,27 @@
-// src/components/cuadricula.tsx
-import React, { useEffect, useRef, useState } from "react";
+// src/components/Cuadricula.tsx
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { images, makeSlug } from "../data/albums";
 import type { ImageItem } from "../data/albums";
 
-/* ---------- LazyImage: carga cuando entra al viewport ---------- */
-const LazyImage: React.FC<{
-  src: string;
-  alt: string;
-  className?: string;
-}> = ({ src, alt, className }) => {
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
-
-    if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setVisible(true);
-              io.disconnect();
-            }
-          });
-        },
-        { rootMargin: "200px" } // precarga un poco antes de entrar
-      );
-      io.observe(img);
-      return () => io.disconnect();
-    } else {
-      // fallback: cargar siempre
-      setVisible(true);
-    }
-  }, []);
-
-  const placeholder =
-    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='9'/>";
+/* ---------- Image with native lazy + fade-in ---------- */
+const FadeImage: React.FC<{ src: string; alt: string; className?: string }> = ({ src, alt, className }) => {
+  const [loaded, setLoaded] = useState(false);
 
   return (
     <img
-      ref={imgRef}
-      src={visible ? src : placeholder}
-      data-src={src}
+      src={src}
       alt={alt}
-      className={className}
       loading="lazy"
       decoding="async"
-      style={{ willChange: "transform, opacity" }}
+      onLoad={() => setLoaded(true)}
+      className={`${className ?? ""} transition-opacity duration-500 ease-in-out ${loaded ? "opacity-100" : "opacity-0"}`}
+      style={{ willChange: "opacity, transform" }}
     />
   );
 };
 
-/* ---------- ImageCard optimizado (no animar flex/width) ---------- */
+/* ---------- ImageCard ---------- */
 const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
   const [hovered, setHovered] = useState(false);
   const slug = makeSlug(item.alt);
@@ -67,18 +34,18 @@ const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
       aria-label={`Ir al álbum ${item.alt}`}
-      className="relative w-full h-full overflow-hidden rounded-sm group"
+      className="relative w-full h-full overflow-hidden rounded-sm group block"
     >
+      {/* imagen */}
       <div className="absolute inset-0">
-        <LazyImage
+        <FadeImage
           src={item.src}
           alt={item.alt}
-          className={`w-full h-full object-cover object-center transform transition-transform duration-450 ${
-            hovered ? "scale-110" : "scale-100"
-          }`}
+          className={`w-full h-full object-cover object-center transform transition-transform duration-500 ${hovered ? "scale-105" : "scale-100"}`}
         />
       </div>
 
+      {/* overlay */}
       <div
         className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 transition-opacity duration-300 ${
           hovered ? "opacity-100" : "opacity-0"
@@ -97,6 +64,7 @@ const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
         </button>
       </div>
 
+      {/* etiqueta */}
       <div
         className={`absolute left-3 bottom-3 z-20 px-2 py-1 rounded-md bg-black/40 text-white text-xs font-medium transition-opacity duration-300 ${
           hovered ? "opacity-0" : "opacity-100"
@@ -108,34 +76,88 @@ const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
   );
 };
 
-/* ---------- Layout principal: grid para filas (4 columnas) ---------- */
+/* ---------- Layout principal ---------- */
 const Cuadricula: React.FC = () => {
   const firstRow = images.slice(0, 4);
   const secondRow = images.slice(4, 8);
 
   return (
-    <section className="h-screen w-full overflow-hidden" id="cuadricula">
-      <div className="h-full flex flex-col">
-        <div className="h-[10%] px-6 flex items-center justify-center">
+    <section className="w-full bg-transparent" id="cuadricula">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        {/* Título superior */}
+        <div className="mb-6 flex items-center justify-center">
           <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight">Deporte</h2>
         </div>
 
-        <div className="h-[40%] px-6">
-          <div className="h-full grid grid-cols-2 md:grid-cols-4 gap-3 min-h-0">
+        {/* DESCRIPCIÓN / PUNTEO */}
+        <div className="mx-auto max-w-4xl mb-10">
+          <p className="text-gray-200 mb-4">
+            Esta sección reúne mi trabajo especializado en fotografía deportiva aplicada al básquet. Incluye cuatro álbumes temáticos:
+          </p>
+          <ul className="list-disc list-inside text-gray-200 space-y-2 text-sm sm:text-base leading-relaxed">
+            <li>
+              <span className="font-semibold text-white">Partidos:</span>{" "}
+              Cobertura dinámica de encuentros, con enfoque en jugadas clave y técnica.
+            </li>
+            <li>
+              <span className="font-semibold text-white">Campeonatos:</span>{" "}
+              Registro de instancias decisivas en torneos locales y provinciales.
+            </li>
+            <li>
+              <span className="font-semibold text-white">Mediaday:</span>{" "}
+              Sesiones de retrato para equipos y selecciones, orientadas a comunicación institucional.
+            </li>
+            <li>
+              <span className="font-semibold text-white">Campus:</span>{" "}
+              Documentación de entrenamientos y clínicas de formación para jugadores en desarrollo.
+            </li>
+          </ul>
+        </div>
+
+        {/* Primera fila */}
+        <div className="mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {firstRow.map((img) => (
-              <ImageCard key={img.alt} item={img} />
+              <div key={img.alt} className="h-48 md:h-56 w-full relative min-h-0">
+                <ImageCard item={img} />
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="h-[10%] px-6 flex items-center justify-center">
+        {/* Título intermedio */}
+        <div className="mb-6 flex items-center justify-center">
           <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight">Contenido para Redes</h2>
         </div>
 
-        <div className="h-[40%] px-6 pb-6">
-          <div className="h-full grid grid-cols-2 md:grid-cols-4 gap-3 min-h-0">
+        {/* DESCRIPCIÓN / PUNTEO NUEVO */}
+        <div className="mx-auto max-w-4xl mb-10">
+          <p className="text-gray-200 mb-4">
+            Esta sección reúne mi trabajo en fotografía social, organizada en tres líneas de servicio especializadas:
+          </p>
+          <ul className="list-disc list-inside text-gray-200 space-y-2 text-sm sm:text-base leading-relaxed">
+            <li>
+              <span className="font-semibold text-white">Eventos Presenciales:</span>{" "}
+              Cobertura de recibidas, ceremonias y obras de teatro, con registro de momentos espontáneos y dinámicas grupales.
+            </li>
+            <li>
+              <span className="font-semibold text-white">Naturaleza:</span>{" "}
+              Documentación de entornos naturales, vida silvestre y paisajes.
+            </li>
+            <li>
+              <span className="font-semibold text-white">Fotoproducto para Redes Sociales:</span>{" "}
+              Producción de contenido visual para marcas, optimizado para plataformas digitales con criterios de identidad visual y engagement.
+            </li>
+          </ul>
+        </div>
+
+        {/* Segunda fila */}
+        <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {secondRow.map((img) => (
-              <ImageCard key={img.alt} item={img} />
+              <div key={img.alt} className="h-48 md:h-56 w-full relative min-h-0">
+                <ImageCard item={img} />
+              </div>
             ))}
           </div>
         </div>
