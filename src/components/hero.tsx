@@ -52,9 +52,7 @@ const Hero: React.FC = () => {
             </h2>
 
             <p className="mt-6 text-gray-200 max-w-3xl text-base sm:text-lg md:text-xl leading-relaxed">
-              Periodista y fotógrafa profesional especializada en eventos deportivos. Capturo la intensidad
-              del juego, la emoción de las gradas y los momentos que cuentan historias. Trabajo con edición profesional y entrega optimizada para web
-              y prensa.
+              Soy comunicadora social, periodista y fotógrafa profesional, especializada en la cobertura de eventos deportivos. Mi búsqueda estética se concentra en capturar la intensidad del juego, la emoción de las gradas y los momentos que cuentan historias. Cuido estrictamente la calidad en mis producciones: trabajo con edición profesional y entrega optimizada para web y prensa.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
