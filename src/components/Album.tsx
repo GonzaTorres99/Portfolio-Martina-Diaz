@@ -1,28 +1,44 @@
-// src/components/Album.tsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 
 type ImgItem = { src: string; name: string };
 type ImageModule = { default?: string };
+// metadata can be either a string (txt/md) or an object (json)
+type MetaModule = { default?: string | Record<string, unknown> };
 
-/**
- * Tipado para los loaders que devuelve import.meta.glob en Vite:
- * cada loader es una función que resuelve a un módulo con { default?: string } (url)
- */
-const modules = import.meta.glob("/src/albums/**/*.{jpg,jpeg,png,webp}") as Record<
-    string,
-    () => Promise<ImageModule>
->;
+// loaders for images
+const modules = import.meta.glob('/src/albums/**/*.{jpg,jpeg,png,webp}') as Record<string, () => Promise<ImageModule>>;
+// loaders for album metadata: meta.json, meta.txt or meta.md
+const metaLoaders = import.meta.glob('/src/albums/**/meta.{json,txt,md}') as Record<string, () => Promise<MetaModule>>;
 
 const Album: React.FC = () => {
     const { slug } = useParams<{ slug?: string }>();
     const [images, setImages] = useState<ImgItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [albumDescription, setAlbumDescription] = useState<string | null>(null);
 
     // slider state
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const modalRef = useRef<HTMLDivElement | null>(null);
     const touchStartX = useRef<number | null>(null);
+
+    // ensure we start at top of the album when navigating here
+    useLayoutEffect(() => {
+        if (!slug) return;
+        window.scrollTo({ top: 0, left: 0 });
+
+        // history.scrollRestoration exists on browsers; cast to a narrower type to avoid `any`
+        try {
+            const h = history as unknown as { scrollRestoration?: 'auto' | 'manual' };
+            if (typeof h.scrollRestoration !== 'undefined') {
+                h.scrollRestoration = 'manual';
+            }
+        } catch (err) {
+            // log but don't throw — some environments may restrict access to history props
+            
+            console.warn('No se pudo ajustar scrollRestoration:', err);
+        }
+    }, [slug]);
 
     useEffect(() => {
         if (!slug) return;
@@ -34,33 +50,69 @@ const Album: React.FC = () => {
 
         Promise.all(
             matching.map(async ([path, loader]) => {
-                // loader ya está tipado como () => Promise<{ default?: string }>
                 const mod = await loader();
-                // Vite usualmente devuelve { default: url }
                 const url = (mod && (mod.default ?? (mod as unknown as string))) as string;
-                const filename = path.split("/").pop() ?? path;
+                const filename = path.split('/').pop() ?? path;
                 return { src: url, name: filename };
             })
         )
-            .then((imgs) => {
-                setImages(imgs);
-            })
+            .then((imgs) => setImages(imgs))
             .catch((err) => {
-                console.error("Error cargando imágenes del álbum", err);
+                
+                console.error('Error cargando imágenes del álbum', err);
                 setImages([]);
             })
             .finally(() => setLoading(false));
-    }, [slug]); // modules está fuera del componente, no es necesario ponerlo aquí
+
+        // try to load album metadata (meta.json / meta.txt / meta.md)
+        (async () => {
+            try {
+                const metaMatch = Object.entries(metaLoaders).find(([p]) => p.includes(`/albums/${slug}/`));
+                if (!metaMatch) {
+                    setAlbumDescription(null);
+                    return;
+                }
+                const [, loader] = metaMatch;
+
+                // loader should resolve to MetaModule (string for txt/md or object for json)
+                const mod = (await loader()) as MetaModule | null;
+                if (!mod) {
+                    setAlbumDescription(null);
+                    return;
+                }
+
+                // Use a narrow type guard instead of `any`.
+                const value: string | Record<string, unknown> | null = typeof mod.default !== 'undefined' ? mod.default! : null;
+
+                if (typeof value === 'string') {
+                    // plain text or markdown: use the first non-empty line as short description
+                    const firstLine = value.split(/\r?\n/).map((s) => s.trim()).find(Boolean) ?? null;
+                    setAlbumDescription(firstLine);
+                } else if (value && typeof value === 'object') {
+                    // json: try common fields
+                    const obj = value as Record<string, unknown>;
+                    const descCandidate = obj.description ?? obj.desc ?? obj.summary ?? null;
+                    setAlbumDescription(typeof descCandidate === 'string' ? descCandidate : null);
+                } else {
+                    setAlbumDescription(null);
+                }
+            } catch (err) {
+                
+                console.warn('No se pudo cargar metadata del álbum', err);
+                setAlbumDescription(null);
+            }
+        })();
+    }, [slug]);
 
     // keyboard navigation while modal open
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
             if (openIndex === null) return;
-            if (e.key === "ArrowRight") {
+            if (e.key === 'ArrowRight') {
                 setOpenIndex((i) => (i === null ? null : Math.min(images.length - 1, i + 1)));
-            } else if (e.key === "ArrowLeft") {
+            } else if (e.key === 'ArrowLeft') {
                 setOpenIndex((i) => (i === null ? null : Math.max(0, i - 1)));
-            } else if (e.key === "Escape") {
+            } else if (e.key === 'Escape') {
                 setOpenIndex(null);
             }
         },
@@ -69,15 +121,15 @@ const Album: React.FC = () => {
 
     useEffect(() => {
         if (openIndex !== null) {
-            window.addEventListener("keydown", onKeyDown);
-            document.body.style.overflow = "hidden";
+            window.addEventListener('keydown', onKeyDown);
+            document.body.style.overflow = 'hidden';
         } else {
-            window.removeEventListener("keydown", onKeyDown);
-            document.body.style.overflow = "";
+            window.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = '';
         }
         return () => {
-            window.removeEventListener("keydown", onKeyDown);
-            document.body.style.overflow = "";
+            window.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = '';
         };
     }, [openIndex, onKeyDown]);
 
@@ -109,12 +161,23 @@ const Album: React.FC = () => {
         );
     }
 
+    const humanTitle = slug.replace(/-/g, ' ');
+
     return (
         <main className="min-h-screen bg-gray-900 text-white py-12">
             <div className="mx-auto max-w-6xl px-6">
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-3xl font-bold capitalize">{slug.replace(/-/g, " ")}</h1>
-                    <Link to="/" className="text-sm text-gray-300 hover:underline">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h1 className="text-3xl font-bold capitalize">{humanTitle}</h1>
+                        {/* album description under title */}
+                        {albumDescription ? (
+                            <p className="mt-1 text-sm text-gray-300 max-w-2xl">{albumDescription}</p>
+                        ) : (
+                            <p className="mt-1 text-sm text-gray-400">{images.length > 0 ? `${images.length} foto${images.length > 1 ? 's' : ''}` : 'Sin fotos'}</p>
+                        )}
+                    </div>
+
+                    <Link to="/" className="text-sm text-gray-300 hover:underline self-start sm:self-auto">
                         Volver
                     </Link>
                 </div>
@@ -141,6 +204,8 @@ const Album: React.FC = () => {
                                         loading="lazy"
                                         decoding="async"
                                     />
+                                    {/* small caption under thumbnail - show filename without extension */}
+                                    <div className="mt-2 text-xs text-gray-300 text-left px-1 truncate">{img.name.replace(/\.[^.]+$/, '')}</div>
                                 </button>
                             ))}
                         </div>
@@ -174,7 +239,7 @@ const Album: React.FC = () => {
                                             alt={images[openIndex].name}
                                             className="max-h-[70vh] w-auto object-contain"
                                         />
-                                        
+                                        <div className="mt-2 text-sm text-center text-gray-300">{images[openIndex].name.replace(/\.[^.]+$/, '')}</div>
                                     </div>
 
                                     {/* Next */}
