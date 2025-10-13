@@ -205,7 +205,7 @@ const Album: React.FC = () => {
                                         decoding="async"
                                     />
                                     {/* small caption under thumbnail - show filename without extension */}
-                                    <div className="mt-2 text-xs text-gray-300 text-left px-1 truncate">{img.name.replace(/\.[^.]+$/, '')}</div>
+                                    
                                 </button>
                             ))}
                         </div>

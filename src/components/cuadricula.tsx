@@ -94,24 +94,6 @@ const Cuadricula: React.FC = () => {
           <p className="text-gray-200 mb-4">
             Esta sección reúne mi trabajo especializado en fotografía deportiva aplicada al básquet. Incluye cuatro álbumes temáticos:
           </p>
-          <ul className="list-disc list-inside text-gray-200 space-y-2 text-sm sm:text-base leading-relaxed">
-            <li>
-              <span className="font-semibold text-white">Partidos:</span>{" "}
-              Cobertura dinámica de encuentros, con enfoque en jugadas clave y técnica.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Campeonatos:</span>{" "}
-              Registro de instancias decisivas en torneos locales y provinciales.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Mediaday:</span>{" "}
-              Sesiones de retrato para equipos y selecciones, orientadas a comunicación institucional.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Campus:</span>{" "}
-              Documentación de entrenamientos y clínicas de formación para jugadores en desarrollo.
-            </li>
-          </ul>
         </div>
 
         {/* Primera fila */}
@@ -133,22 +115,8 @@ const Cuadricula: React.FC = () => {
         {/* DESCRIPCIÓN / PUNTEO NUEVO */}
         <div className="mx-auto max-w-4xl mb-10">
           <p className="text-gray-200 mb-4">
-            Esta sección reúne mi trabajo en fotografía social, organizada en tres líneas de servicio especializadas:
+            Esta sección reúne mi trabajo en fotografía social, organizada en cuatro líneas de servicio especializadas:
           </p>
-          <ul className="list-disc list-inside text-gray-200 space-y-2 text-sm sm:text-base leading-relaxed">
-            <li>
-              <span className="font-semibold text-white">Eventos Presenciales:</span>{" "}
-              Cobertura de recibidas, ceremonias y obras de teatro, con registro de momentos espontáneos y dinámicas grupales.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Naturaleza:</span>{" "}
-              Documentación de entornos naturales, vida silvestre y paisajes.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Fotoproducto para Redes Sociales:</span>{" "}
-              Producción de contenido visual para marcas, optimizado para plataformas digitales con criterios de identidad visual y engagement.
-            </li>
-          </ul>
         </div>
 
         {/* Segunda fila */}

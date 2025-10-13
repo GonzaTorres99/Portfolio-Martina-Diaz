@@ -17,7 +17,7 @@ export const images: ImageItem[] = [
   { src: foto4, alt: "MediaDay" },
   { src: foto5, alt: "Eventos" },
   { src: foto6, alt: "Naturaleza" },
-  { src: foto7, alt: "Producto" },
+  { src: foto7, alt: "Fotoproducto" },
   { src: foto8, alt: "Teatro" },
 ];
 
