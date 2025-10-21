@@ -1,27 +1,31 @@
 // scripts/optimize-albums.js
 // Ejecutar: node scripts/optimize-albums.js
-// Genera versiones 400, 800, 1200 en avif y webp dentro de src/albums/.../optimized
-// y crea un placeholder tiny base64 en optimized/<name>.placeholder.txt
+// Diseñado para proyectos con "type": "module" en package.json
 
-const fs = require('fs').promises;
-const path = require('path');
-const sharp = require('sharp');
-const fg = require('fast-glob');
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import sharp from 'sharp';
+import fg from 'fast-glob';
 
 (async () => {
   try {
+    // __dirname equivalente en ESM
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
     const ROOT = path.join(__dirname, '..');
     const ALBUMS_DIR = path.join(ROOT, 'src', 'albums');
 
-    // ajusta tamaños y formatos si querés
+    // Configuración
     const SIZES = [400, 800, 1200];
-    const FORMATS = ['avif', 'webp'];
+    const FORMATS = ['avif', 'webp']; // si AVIF da problemas, cambia a ['webp']
     const PLACEHOLDER_WIDTH = 20;
 
-    // buscar solo imágenes originales (png/jpg/jpeg)
+    // Buscar imágenes originales (png/jpg/jpeg)
     const imagePaths = await fg(['**/*.{png,jpg,jpeg}'], { cwd: ALBUMS_DIR, absolute: true, suppressErrors: true });
 
-    if (imagePaths.length === 0) {
+    if (!imagePaths || imagePaths.length === 0) {
       console.log('No se encontraron imágenes en src/albums. Revisa la ruta y vuelve a ejecutar.');
       return;
     }
@@ -40,7 +44,7 @@ const fg = require('fast-glob');
           const outName = `${baseName}-${size}.${fmt}`;
           const outPath = path.join(outDir, outName);
           try {
-            // si ya existe, saltamos
+            // si ya existe, skip
             await fs.stat(outPath).catch(async () => {
               await sharp(imgPath)
                 .resize({ width: size, withoutEnlargement: true })
