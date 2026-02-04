@@ -22,13 +22,19 @@ const FadeImage: React.FC<{ src: string; alt: string; className?: string }> = ({
 };
 
 /* ---------- ImageCard ---------- */
-const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
+const ImageCard: React.FC<{ item: ImageItem; url?: string }> = ({ item, url }) => {
   const [hovered, setHovered] = useState(false);
   const slug = makeSlug(item.alt);
 
   return (
     <Link
-      to={`/albums/${slug}`}
+      to={url ? "#" : `/albums/${slug}`}
+      onClick={(e) => {
+        if (url) {
+          e.preventDefault();
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
@@ -78,8 +84,9 @@ const ImageCard: React.FC<{ item: ImageItem }> = ({ item }) => {
 
 /* ---------- Layout principal ---------- */
 const Cuadricula: React.FC = () => {
-  const firstRow = images.slice(0, 4);
-  const secondRow = images.slice(4, 8);
+  const firstRow = images.slice(0, 5);
+  const secondRow = images.slice(5, 9);
+  const thirdRow = [images[9]]; // Usa la imagen de Videos
 
   return (
     <section className="w-full bg-transparent" id="cuadricula">
@@ -98,7 +105,7 @@ const Cuadricula: React.FC = () => {
 
         {/* Primera fila */}
         <div className="mb-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {firstRow.map((img) => (
               <div key={img.alt} className="h-48 md:h-56 w-full relative min-h-0">
                 <ImageCard item={img} />
@@ -125,6 +132,29 @@ const Cuadricula: React.FC = () => {
             {secondRow.map((img) => (
               <div key={img.alt} className="h-48 md:h-56 w-full relative min-h-0">
                 <ImageCard item={img} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Título de Videos */}
+        <div className="mb-6 mt-16 flex items-center justify-center">
+          <h2 className="text-white text-3xl sm:text-4xl font-bold tracking-tight">Videos</h2>
+        </div>
+
+        {/* DESCRIPCIÓN VIDEOS */}
+        <div className="mx-auto max-w-4xl mb-10">
+          <p className="text-gray-200 mb-4">
+            Explora mi trabajo en videografía y contenido audiovisual. Una colección curada de momentos capturados en movimiento.
+          </p>
+        </div>
+
+        {/* Tercera fila - Solo un elemento */}
+        <div className="flex justify-center">
+          <div className="w-full sm:w-1/2 md:w-1/4">
+            {thirdRow.map((img) => (
+              <div key={img.alt} className="h-48 md:h-56 w-full relative min-h-0">
+                <ImageCard item={img} url="https://drive.google.com/drive/folders/1V4BLv9ms8i3A4JB6ST6GJ1QNifVQZI2f?" />
               </div>
             ))}
           </div>
