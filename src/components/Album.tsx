@@ -2,12 +2,11 @@
 import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-type ImgItem = { key: string; src: string; name: string };
+type ImgItem = { name: string };
 type Variant = { src: string; w: number };
 
 // glob imports (eager) — Vite resolverá a URLs/string en build time
 const optimizedModules = import.meta.glob('/src/albums/**/optimized/*.{webp,avif,txt}', { eager: true }) as Record<string, { default: string }>;
-const originalModules = import.meta.glob('/src/albums/**/*.{jpg,jpeg,png,webp,avif}', { eager: true }) as Record<string, { default: string }>;
 // metadata loaders (eager) — puede resolver json (obj) o txt/md (string)
 const metaModules = import.meta.glob('/src/albums/**/meta.{json,txt,md}', { eager: true }) as Record<
   string,
@@ -46,12 +45,32 @@ const Album: React.FC = () => {
     setLoading(true);
 
     try {
-      // Build list of originals for the album
-      const matching = Object.entries(originalModules)
-        .filter(([path]) => path.includes(`/albums/${slug}/`))
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([path, mod]) => ({ key: path, src: mod.default, name: path.split('/').pop() ?? path }));
+      // Build list of images from optimized variants
+      const optimizedPaths = Object.keys(optimizedModules).filter(
+        (path) => path.includes(`/albums/${slug}/optimized/`)
+      );
 
+      // Extraer nombres únicos de imágenes (sin resolución ni extensión)
+      const imageNamesSet = new Set<string>();
+      for (const path of optimizedPaths) {
+        const basename = path.split('/').pop() ?? '';
+        // Ignorar placeholder files
+        if (basename.endsWith('.placeholder.txt')) continue;
+        // Extraer nombre de imagen: "1-400.webp" -> "1"
+        const match = basename.match(/^(.+?)-(400|800|1200)\.(webp|avif)$/);
+        if (match) {
+          imageNamesSet.add(match[1]);
+        }
+      }
+
+      // Convertir a array y ordenar
+      const imageNames = Array.from(imageNamesSet).sort((a, b) => {
+        const numA = parseInt(a, 10) || 0;
+        const numB = parseInt(b, 10) || 0;
+        return numA - numB;
+      });
+
+      const matching = imageNames.map((name) => ({ name }));
       setImages(matching);
     } catch (err) {
       console.error('Error cargando imágenes del álbum', err);
@@ -140,14 +159,12 @@ const Album: React.FC = () => {
     touchStartX.current = null;
   };
 
-  // --- helpers to resolve optimized variants for an original image key ---
-  function variantsFor(originalKey: string) {
-    // originalKey e.g. '/src/albums/mi-album/imagen.png'
-    const dirname = originalKey.substring(0, originalKey.lastIndexOf('/'));
-    const filename = originalKey.substring(originalKey.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '');
-    const optimizedDir = `${dirname}/optimized/`;
-
-    const found = Object.entries(optimizedModules).filter(([k]) => k.startsWith(optimizedDir));
+  // --- helpers to resolve optimized variants for an image name ---
+  function variantsFor(imageName: string) {
+    // imageName e.g. '1' or 'photo-1'
+    const found = Object.entries(optimizedModules).filter(
+      ([k]) => k.includes(`/albums/${slug}/optimized/`)
+    );
 
     const avif: Variant[] = [];
     const webp: Variant[] = [];
@@ -156,14 +173,13 @@ const Album: React.FC = () => {
     for (const [k, mod] of found) {
       const basename = k.split('/').pop() ?? k;
       // placeholder file: <name>.placeholder.txt
-      if (basename === `${filename}.placeholder.txt`) {
-        // module.default should be the dataURI string
+      if (basename === `${imageName}.placeholder.txt`) {
         placeholder = String(mod.default);
         continue;
       }
 
       // variant files: <name>-<size>.<ext>
-      const match = basename.match(new RegExp(`^${escapeRegExp(filename)}-(\\d+)\\.(webp|avif)$`));
+      const match = basename.match(new RegExp(`^${escapeRegExp(imageName)}-(\\d+)\\.(webp|avif)$`));
       if (match) {
         const w = Number(match[1]);
         const ext = match[2];
@@ -177,10 +193,7 @@ const Album: React.FC = () => {
     avif.sort((a, b) => a.w - b.w);
     webp.sort((a, b) => a.w - b.w);
 
-    // fallback: original image url (from originalModules)
-    const fallback = (originalModules[originalKey] && (originalModules[originalKey].default)) || '';
-
-    return { avif, webp, fallback, placeholder };
+    return { avif, webp, placeholder };
   }
 
   // safe escape for regex
@@ -224,10 +237,10 @@ const Album: React.FC = () => {
             {/* grid de miniaturas */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {images.map((img, i) => {
-                const v = variantsFor(img.key);
+                const v = variantsFor(img.name);
                 const srcSetAvif = v.avif.map((x) => `${x.src} ${x.w}w`).join(', ');
                 const srcSetWebp = v.webp.map((x) => `${x.src} ${x.w}w`).join(', ');
-                const thumbSrc = v.webp[0]?.src ?? v.fallback;
+                const thumbSrc = v.webp[0]?.src ?? v.avif[0]?.src;
 
                 return (
                   <button
@@ -284,12 +297,12 @@ const Album: React.FC = () => {
                   <div className="mx-auto max-h-full overflow-hidden rounded">
                     {(() => {
                       const current = images[openIndex];
-                      const v = variantsFor(current.key);
-                      const largeSrc = v.avif[v.avif.length - 1]?.src ?? v.webp[v.webp.length - 1]?.src ?? v.fallback;
+                      const v = variantsFor(current.name);
+                      const largeSrc = v.avif[v.avif.length - 1]?.src ?? v.webp[v.webp.length - 1]?.src;
                       return (
                         <>
-                          <img src={largeSrc} alt={current.name} className="max-h-[70vh] w-auto object-contain" />
-                          <div className="mt-2 text-sm text-center text-gray-300">{current.name.replace(/\.[^.]+$/, '')}</div>
+                          {largeSrc && <img src={largeSrc} alt={current.name} className="max-h-[70vh] w-auto object-contain" />}
+                          <div className="mt-2 text-sm text-center text-gray-300">{current.name}</div>
                         </>
                       );
                     })()}
